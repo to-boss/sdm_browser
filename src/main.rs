@@ -19,7 +19,7 @@ fn App() -> Element {
 
     rsx! {
         div {
-            class: "size-full flex flex-column overflow-hidden",
+            class: "size-full flex flex-row overflow-hidden bg-gray-900",
             div {
                 class: "h-screen w-80 border-r-2",
                 match &*model_list_future.read() {

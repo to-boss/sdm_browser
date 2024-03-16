@@ -16,9 +16,9 @@ pub fn FilteredList(props: FilteredListProps) -> Element {
     rsx! {
         // Filter
         div {
-            class: "size-full",
+            class: "size-full rounded-lg",
             input {
-                class: "p-2",
+                class: "w-full",
                 value: "{filter}",
                 placeholder: "Search",
                 spellcheck: false,
@@ -26,7 +26,7 @@ pub fn FilteredList(props: FilteredListProps) -> Element {
             },
             // List
             div {
-                class: "size-full overflow-auto divide-y-2",
+                class: "size-full overflow-auto scrollbar divide-y-2",
                 for data_model_repo in props.model_list.entries
                     .iter()
                     .filter(|&dmr| contains_filter(dmr, &filter())) {

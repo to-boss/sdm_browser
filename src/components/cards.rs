@@ -17,21 +17,21 @@ pub fn RepoCard(props: RepoCardProps) -> Element {
     rsx! {
         ul {
             div {
-                class: "flex flex-column hover:cursor-pointer",
+                class: "flex flex-row hover:cursor-pointer",
                 onclick: move |_| collapsed.set(!collapsed()),
                 div {
-                    class: "flex flex-column",
+                    class: "flex flex-row",
                     span {
-                        class: "my-auto font-light text-sm",
+                        class: "text-gray-300 my-auto font-light text-sm",
                         "({dmr_len})",
                     },
                     h1 {
-                        class: "ml-2 text-lg",
+                        class: "ml-2 text-lg text-white",
                         "{props.data_model_repo.name}",
                     },
                 }
                 div {
-                    class: "ml-auto border-1 size-4",
+                    class: "text-white ml-auto border-1 size-4",
                     if collapsed() {
                         "▼"
                     } else {
@@ -41,7 +41,7 @@ pub fn RepoCard(props: RepoCardProps) -> Element {
             }
             if !collapsed() {
                 ul {
-                    class: "ml-8",
+                    class: "ml-8 text-gray-300",
                     for data_model in props.data_model_repo.data_models.iter() {
                         { color_name_based_on_filter(data_model, &props.filter) }
                     }
@@ -66,8 +66,7 @@ fn color_name_based_on_filter(name: &String, filter: &String) -> Element {
     if filter.is_empty() {
         return rsx! {
             li {
-                class: "hover:bg-slate-200 hover:cursor-pointer
-               before:relative before:-top-1 before:border-b-1",
+                class: "hover:bg-slate-200 hover:cursor-pointer",
                 "{name}"
             }
         };
