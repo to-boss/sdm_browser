@@ -21,17 +21,15 @@ fn App() -> Element {
         div {
             class: "size-full flex flex-row overflow-hidden bg-gray-900",
             div {
-                class: "h-screen w-80 border-r-2",
+                class: "mx-4 my-8 h-screen w-80",
                 match &*model_list_future.read() {
                     Some(Ok(model_list)) => rsx! {
                         FilteredList{ model_list: model_list.clone() }
                     },
                     Some(Err(err)) => rsx! { div {
-                        class: "h-full w-80 border-r-2",
                         "{err}"
                     }},
                     None => rsx! { div {
-                        class: "h-full w-80 border-r-2",
                         "Loading models..."
                     }},
                 }
