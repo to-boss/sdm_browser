@@ -44,3 +44,30 @@ where
     let (_, name) = name.split_once('.').expect("contains datamodel.");
     Ok(name.to_string())
 }
+
+pub struct Link<'a> {
+    part1: &'a str,
+    part2: &'a str,
+    part3: &'a str,
+}
+
+impl<'a> Link<'a> {
+    pub fn to_data_model_repo(&self, repo_name: &String, data_model: &String) -> String {
+        format!(
+            "{githubusercontent}{repo_name}{master}{data_model}{schema}",
+            githubusercontent = self.part1,
+            master = self.part2,
+            schema = self.part3
+        )
+    }
+}
+
+// https://raw.githubusercontent.com/smart-data-models/dataModel.Parking
+// /master/
+// ParkingSpot
+// /schema.json
+pub const GITHUB_LINK: Link = Link {
+    part1: "https://raw.githubusercontent.com/smart-data-models/dataModel.",
+    part2: "/master/",
+    part3: "/schema.json",
+};

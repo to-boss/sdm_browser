@@ -1,4 +1,6 @@
 #![allow(non_snake_case)]
+use std::collections::HashMap;
+
 use dioxus::{desktop::Config, prelude::*};
 
 use crate::{components::list::FilteredList, smartdata::models::ModelList};
@@ -14,6 +16,10 @@ fn main() {
     LaunchBuilder::desktop().with_cfg(config).launch(App);
 }
 
+struct FetchedDataModels {
+    fetched: HashMap<String, String>,
+}
+
 fn App() -> Element {
     let model_list_future = use_resource(move || async move { ModelList::fetch().await });
 
@@ -26,10 +32,10 @@ fn App() -> Element {
                     Some(Ok(model_list)) => rsx! {
                         FilteredList{ model_list: model_list.clone() }
                     },
-                    Some(Err(err)) => rsx! { div {
+                    Some(Err(err)) => rsx! { p {
                         "{err}"
                     }},
-                    None => rsx! { div {
+                    None => rsx! { p {
                         "Loading models..."
                     }},
                 }
