@@ -1,66 +1,60 @@
 use dioxus::prelude::*;
 
-use crate::smartdata::models::{DataModelRepo, GITHUB_MODEL_YAML};
-
-/*
-#[derive(Props)]
-pub struct RepoCardProps {
-    data_model_repo: &'a DataModelRepo,
-    filter: String,
-    #[props(default = false)]
-    collapsed: bool,
-}
-*/
+use crate::{
+    smartdata::models::{DataModelRepo, GITHUB_MODEL_YAML},
+    DataModelData,
+};
 
 #[component]
 pub fn RepoCard(
     data_model_repo: DataModelRepo,
     filter: String,
     collapsed: bool,
-    data_model_url: Signal<String>,
+    data_model_data: Signal<DataModelData>,
 ) -> Element {
     let mut collapsed = use_signal(|| if !filter.is_empty() { false } else { collapsed });
-    // let mut data_model_url = consume_context::<Signal<String>>();
 
     let dmr_len = data_model_repo.data_models.len();
     let collapse_icon = if collapsed() { "▲" } else { "▼" };
 
     rsx! {
-        ul {
+        div {
+            class: "w-full flex flex-row px-1 hover:cursor-pointer",
+            onclick: move |_| collapsed.set(!collapsed()),
             div {
-                class: "flex flex-row hover:cursor-pointer",
-                onclick: move |_| collapsed.set(!collapsed()),
-                div {
-                    class: "flex flex-row",
-                    span {
-                        class: "text-slate-300 my-auto font-light text-sm",
-                        "({dmr_len})",
-                    },
-                    h1 {
-                        class: "ml-2 text-ellipsis text-base font-medium tracking-tight text-slate-900",
-                        "{data_model_repo.name}",
-                    },
-                }
-                div {
-                    class: "text-slate-500 ml-auto border-1 size-4",
-                    "{collapse_icon}",
-                }
+                class: "w-full flex flex-row",
+                span {
+                    class: "text-slate-300 my-auto font-light text-sm",
+                    "({dmr_len})",
+                },
+                h1 {
+                    class: "ml-2 text-ellipsis text-base
+                            font-medium tracking-tight text-slate-900",
+                    "{data_model_repo.name}",
+                },
             }
-            if !collapsed() {
-                ul {
-                    class: "ml-8",
-                    for name in data_model_repo.data_models.iter() {
-                        div {
-                            onclick: {
-                                let repo_name = data_model_repo.name.clone();
-                                let name = name.clone();
-                                move |_| {
-                                    let url = GITHUB_MODEL_YAML.to_data_model_repo(repo_name.as_str(), name.as_str());
-                                    data_model_url.set(url);
-                                }
-                            },
-                            { color_name_based_on_filter(name, &filter) }
-                        }
+            div {
+                class: "text-slate-500 ml-auto border-1 size-4",
+                "{collapse_icon}",
+            }
+        }
+        if !collapsed() {
+            ul {
+                class: "w-full ml-8",
+                for name in data_model_repo.data_models.iter() {
+                    div {
+                        onclick: {
+                            let repo_name = data_model_repo.name.clone();
+                            let name = name.clone();
+                            move |_| {
+                                let url = GITHUB_MODEL_YAML.to_data_model_repo(repo_name.as_str(), name.as_str());
+                                data_model_data.set(DataModelData {
+                                    name: name.clone(),
+                                    url
+                                });
+                            }
+                        },
+                        { color_name_based_on_filter(name, &filter) }
                     }
                 }
             }
@@ -79,7 +73,7 @@ impl<'a> FilterSplit<'a> {
     }
 }
 
-const NAME_STYLE: &str = "text-slate-500 hover:bg-gray-400 hover:cursor-pointer";
+const NAME_STYLE: &str = "text-slate-500 text-ellipsis hover:bg-gray-400 hover:cursor-pointer";
 fn color_name_based_on_filter(name: &String, filter: &String) -> Element {
     if filter.is_empty() {
         return rsx! {
