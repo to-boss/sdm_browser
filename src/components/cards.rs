@@ -1,24 +1,28 @@
 use dioxus::prelude::*;
 
-use crate::smartdata::models::{DataModelRepo, GITHUB_LINK};
+use crate::smartdata::models::{DataModelRepo, GITHUB_MODEL_YAML};
 
-#[derive(PartialEq, Props, Clone)]
+/*
+#[derive(Props)]
 pub struct RepoCardProps {
-    data_model_repo: DataModelRepo,
+    data_model_repo: &'a DataModelRepo,
     filter: String,
     #[props(default = false)]
     collapsed: bool,
 }
+*/
 
-pub fn RepoCard(props: RepoCardProps) -> Element {
-    let mut collapsed = use_signal(|| {
-        if !props.filter.is_empty() {
-            false
-        } else {
-            props.collapsed
-        }
-    });
-    let dmr_len = props.data_model_repo.data_models.len();
+#[component]
+pub fn RepoCard(
+    data_model_repo: DataModelRepo,
+    filter: String,
+    collapsed: bool,
+    data_model_url: Signal<String>,
+) -> Element {
+    let mut collapsed = use_signal(|| if !filter.is_empty() { false } else { collapsed });
+    // let mut data_model_url = consume_context::<Signal<String>>();
+
+    let dmr_len = data_model_repo.data_models.len();
     let collapse_icon = if collapsed() { "▲" } else { "▼" };
 
     rsx! {
@@ -29,30 +33,33 @@ pub fn RepoCard(props: RepoCardProps) -> Element {
                 div {
                     class: "flex flex-row",
                     span {
-                        class: "text-gray-300 my-auto font-light text-sm",
+                        class: "text-slate-300 my-auto font-light text-sm",
                         "({dmr_len})",
                     },
                     h1 {
-                        class: "ml-2 text-lg text-white",
-                        "{props.data_model_repo.name}",
+                        class: "ml-2 text-ellipsis text-base font-medium tracking-tight text-slate-900",
+                        "{data_model_repo.name}",
                     },
                 }
                 div {
-                    class: "text-white ml-auto border-1 size-4",
+                    class: "text-slate-500 ml-auto border-1 size-4",
                     "{collapse_icon}",
                 }
             }
             if !collapsed() {
                 ul {
-                    class: "ml-8 text-gray-300",
-                    for name in props.data_model_repo.data_models.iter() {
+                    class: "ml-8",
+                    for name in data_model_repo.data_models.iter() {
                         div {
                             onclick: {
-                                let repo_name = props.data_model_repo.name.clone();
+                                let repo_name = data_model_repo.name.clone();
                                 let name = name.clone();
-                                move |_| println!("{}", GITHUB_LINK.to_data_model_repo(&repo_name, &name))
+                                move |_| {
+                                    let url = GITHUB_MODEL_YAML.to_data_model_repo(repo_name.as_str(), name.as_str());
+                                    data_model_url.set(url);
+                                }
                             },
-                            { color_name_based_on_filter(name, &props.filter) }
+                            { color_name_based_on_filter(name, &filter) }
                         }
                     }
                 }
@@ -72,7 +79,7 @@ impl<'a> FilterSplit<'a> {
     }
 }
 
-const NAME_STYLE: &str = "hover:bg-slate-700 hover:cursor-pointer";
+const NAME_STYLE: &str = "text-slate-500 hover:bg-gray-400 hover:cursor-pointer";
 fn color_name_based_on_filter(name: &String, filter: &String) -> Element {
     if filter.is_empty() {
         return rsx! {

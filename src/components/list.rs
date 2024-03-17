@@ -5,20 +5,16 @@ use crate::{
     smartdata::models::{DataModelRepo, ModelList},
 };
 
-#[derive(Debug, PartialEq, Props, Clone)]
-pub struct FilteredListProps {
-    model_list: ModelList,
-}
-
-pub fn FilteredList(props: FilteredListProps) -> Element {
+#[component]
+pub fn FilteredList(model_list: ModelList, data_model_url: Signal<String>) -> Element {
     let mut filter = use_signal(|| String::from(""));
 
     rsx! {
         // Filter
         div {
-            class: "size-full rounded-lg",
+            class: "size-full",
             input {
-                class: "w-full",
+                class: "w-full text-slate-500",
                 value: "{filter}",
                 placeholder: "Search",
                 spellcheck: false,
@@ -27,12 +23,14 @@ pub fn FilteredList(props: FilteredListProps) -> Element {
             // List
             div {
                 class: "size-full overflow-auto scrollbar divide-y-2",
-                for data_model_repo in props.model_list.entries
+                for data_model_repo in model_list.entries
                     .iter()
                     .filter(|&dmr| contains_filter(dmr, &filter())) {
                     RepoCard {
                         data_model_repo: data_model_repo.clone(),
-                        filter: filter()
+                        filter: filter,
+                        data_model_url: data_model_url,
+                        collapsed: false,
                     }
                 }
             }

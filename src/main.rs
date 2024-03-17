@@ -1,9 +1,11 @@
 #![allow(non_snake_case)]
-use std::collections::HashMap;
 
 use dioxus::{desktop::Config, prelude::*};
 
-use crate::{components::list::FilteredList, smartdata::models::ModelList};
+use crate::{
+    components::{list::FilteredList, model::ModelComponent},
+    smartdata::models::{Model, ModelList},
+};
 
 mod components;
 mod smartdata;
@@ -16,33 +18,42 @@ fn main() {
     LaunchBuilder::desktop().with_cfg(config).launch(App);
 }
 
-struct FetchedDataModels {
-    fetched: HashMap<String, String>,
-}
-
 fn App() -> Element {
-    let model_list_future = use_resource(move || async move { ModelList::fetch().await });
+    let data_model_url = use_signal(|| String::from(""));
+
+    let model_list = use_resource(move || async move { ModelList::fetch().await });
+    let model = use_resource(move || async move {
+        let url = data_model_url.read().clone();
+        Model::fetch(url.as_str()).await
+    });
 
     rsx! {
         div {
-            class: "size-full flex flex-row overflow-hidden bg-gray-900",
+            class: "bg-white size-full flex flex-row overflow-hidden",
             div {
-                class: "mx-4 my-8 h-screen w-80",
-                match &*model_list_future.read() {
+                class: "h-screen w-96",
+                match &*model_list.read() {
                     Some(Ok(model_list)) => rsx! {
-                        FilteredList{ model_list: model_list.clone() }
+                        FilteredList{
+                            model_list: model_list.clone(),
+                            data_model_url: data_model_url,
+                        }
                     },
                     Some(Err(err)) => rsx! { p {
                         "{err}"
                     }},
                     None => rsx! { p {
-                        "Loading models..."
+                        "Loading model list..."
                     }},
                 }
             },
             div {
-                class: "bg-green-200 size-full",
-                "SEXO",
+                class: "size-full",
+                {if let Some(Ok(model)) =  model.read().as_ref() {
+                    rsx! { ModelComponent { model: model.clone() }}
+                } else {
+                    rsx! { p {"No model selected."}}
+                }}
             }
         }
     }
