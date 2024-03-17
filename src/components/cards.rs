@@ -14,47 +14,58 @@ pub fn RepoCard(
 ) -> Element {
     let mut collapsed = use_signal(|| if !filter.is_empty() { false } else { collapsed });
 
-    let dmr_len = data_model_repo.data_models.len();
+    let item_len = data_model_repo.data_models.len();
     let collapse_icon = if collapsed() { "▲" } else { "▼" };
 
     rsx! {
         div {
-            class: "w-full flex flex-row px-1 hover:cursor-pointer",
+            class: "w-full flex flex-row px-1 rounded-md",
             onclick: move |_| collapsed.set(!collapsed()),
             div {
-                class: "w-full flex flex-row",
-                span {
-                    class: "text-slate-300 my-auto font-light text-sm",
-                    "({dmr_len})",
-                },
+                class: "my-2 w-full flex flex-row hover:cursor-pointer",
                 h1 {
-                    class: "ml-2 text-ellipsis text-base
+                    class: "w-64 text-ellipsis overflow-hidden text-base
                             font-medium tracking-tight text-slate-900",
                     "{data_model_repo.name}",
                 },
-            }
-            div {
-                class: "text-slate-500 ml-auto border-1 size-4",
-                "{collapse_icon}",
-            }
-        }
+                div {
+                    class: "ml-auto my-auto flex flex-row gap-2",
+                    span {
+                        class: "text-xs text-slate-300 ",
+                        "({item_len})",
+                    },
+                    a {
+                        class: "text-xs text-blue-400 hover:underline",
+                        href: data_model_repo.link,
+                        "(link)"
+                    },
+                    div {
+                        class: "text-xs text-slate-500",
+                        "{collapse_icon}",
+                    },
+                },
+            },
+        },
         if !collapsed() {
             ul {
-                class: "w-full ml-8",
+                class: "w-full",
                 for name in data_model_repo.data_models.iter() {
                     div {
                         onclick: {
                             let repo_name = data_model_repo.name.clone();
                             let name = name.clone();
                             move |_| {
-                                let url = GITHUB_MODEL_YAML.to_data_model_repo(repo_name.as_str(), name.as_str());
+                                let url = GITHUB_MODEL_YAML.to_data_model_repo(&repo_name, &name);
                                 data_model_data.set(DataModelData {
                                     name: name.clone(),
                                     url
                                 });
                             }
                         },
-                        { color_name_based_on_filter(name, &filter) }
+                        div {
+                            class: "",
+                            { color_name_based_on_filter(name, &filter) }
+                        },
                     }
                 }
             }
@@ -73,7 +84,8 @@ impl<'a> FilterSplit<'a> {
     }
 }
 
-const NAME_STYLE: &str = "text-slate-500 text-ellipsis hover:bg-gray-400 hover:cursor-pointer";
+const NAME_STYLE: &str = "p-1 m-1 text-sm text-slate-500 text-ellipsis rounded-md
+                          hover:bg-gray-200 hover:cursor-pointer";
 fn color_name_based_on_filter(name: &String, filter: &String) -> Element {
     if filter.is_empty() {
         return rsx! {
@@ -94,26 +106,18 @@ fn color_name_based_on_filter(name: &String, filter: &String) -> Element {
     // There is probably an easier way to do this...
     let splits = name.split_inclusive(filter);
     let final_splits: Vec<_> = splits.into_iter().fold(Vec::new(), |mut vec, s| {
-        if s.contains(filter) {
-            let (a, b) = s.split_once(filter).unwrap();
-            if a.is_empty() && b.is_empty() {
-                vec.push(FilterSplit::new(filter.as_str(), true));
-                return vec;
-            }
-
-            if a.is_empty() {
-                vec.push(FilterSplit::new(filter.as_str(), true));
-                vec.push(FilterSplit::new(b, false));
-                vec
-            } else {
+        if let Some((a, b)) = s.split_once(filter) {
+            if !a.is_empty() {
                 vec.push(FilterSplit::new(a, false));
-                vec.push(FilterSplit::new(filter.as_str(), true));
-                vec
+            }
+            vec.push(FilterSplit::new(filter, true));
+            if !b.is_empty() {
+                vec.push(FilterSplit::new(b, false));
             }
         } else {
             vec.push(FilterSplit::new(s, false));
-            vec
         }
+        vec
     });
 
     rsx! {
@@ -122,7 +126,7 @@ fn color_name_based_on_filter(name: &String, filter: &String) -> Element {
             for split in final_splits.iter() {
                 if split.equals_filter {
                     mark {
-                        class: "font-semibold bg-yellow-300",
+                        class: "font-semibold bg-rose-200",
                         "{split.s}"
                     }
                 } else {

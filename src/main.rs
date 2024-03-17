@@ -36,7 +36,7 @@ fn App() -> Element {
     rsx! {
         // Main Container
         div {
-            class: "bg-white size-full flex flex-row overflow-hidden",
+            class: "bg-white size-full flex flex-row gap-2 overflow-hidden",
             // Left Side
             div {
                 class: "h-screen w-96 shrink-0",
@@ -48,7 +48,7 @@ fn App() -> Element {
                         }
                     },
                     Some(Err(err)) => rsx! { p {
-                        "{err}"
+                        "Error: {err}"
                     }},
                     None => rsx! { p {
                         "Loading model list..."

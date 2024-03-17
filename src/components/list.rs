@@ -1,14 +1,12 @@
 use dioxus::prelude::*;
 
-use crate::{
-    components::cards::RepoCard,
-    smartdata::models::{DataModelRepo, ModelList},
-    DataModelData,
-};
+use crate::{components::cards::RepoCard, smartdata::models::ModelList, DataModelData};
 
 #[component]
 pub fn FilteredList(model_list: ModelList, data_model_data: Signal<DataModelData>) -> Element {
     let mut filter = use_signal(|| String::from(""));
+
+    let filtered_entries = model_list.get_filtered_entries(&filter());
 
     rsx! {
         div {
@@ -51,32 +49,22 @@ pub fn FilteredList(model_list: ModelList, data_model_data: Signal<DataModelData
             div {
                 class: "w-full divide-y border rounded-lg shadow-sm px-3 py-1 mb-1
                         overflow-x-hidden overflow-y-scroll",
-                for data_model_repo in model_list.entries
-                    .iter()
-                    .filter(|&dmr| contains_filter(dmr, &filter())) {
-                    RepoCard {
-                        data_model_repo: data_model_repo.clone(),
-                        filter,
-                        data_model_data,
-                        collapsed: false,
+                if filtered_entries.is_empty() {
+                    p {
+                        class: "p-1 m-1 text-sm text-slate-500",
+                        "No entries matching."
+                    }
+                } else {
+                    for entry in filtered_entries {
+                        RepoCard {
+                            data_model_repo: entry.clone(),
+                            filter,
+                            data_model_data,
+                            collapsed: false,
+                        }
                     }
                 }
             }
         }
     }
-}
-
-fn contains_filter(data_model_repo: &DataModelRepo, filter: &String) -> bool {
-    let in_names = data_model_repo.name.contains(filter);
-    // short curcuit
-    if in_names {
-        return true;
-    }
-
-    let in_children = data_model_repo
-        .data_models
-        .iter()
-        .any(|n| n.contains(filter));
-
-    in_children
 }

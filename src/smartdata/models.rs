@@ -23,6 +23,29 @@ impl ModelList {
 
         Ok(model_list)
     }
+
+    pub fn get_filtered_entries(&self, filter: &str) -> Vec<DataModelRepo> {
+        fn in_name_or_children(data_model_repo: &DataModelRepo, filter: &str) -> bool {
+            let in_names = data_model_repo.name.contains(filter);
+            // short curcuit
+            if in_names {
+                return true;
+            }
+
+            let in_children = data_model_repo
+                .data_models
+                .iter()
+                .any(|n| n.contains(filter));
+
+            in_children
+        }
+
+        self.entries
+            .iter()
+            .filter(|&dmr| in_name_or_children(dmr, filter))
+            .cloned()
+            .collect()
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Props, PartialEq, Clone)]
