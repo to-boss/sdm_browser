@@ -29,10 +29,7 @@ fn Properties(properties: Vec<Property>) -> Element {
     let mut update_marks = move |event: Event<FormData>, i: usize| {
         marks.with_mut(|vec| {
             if let Some(element) = vec.get_mut(i) {
-                *element = match event.data.value().as_str() {
-                    "true" => true,
-                    _ => false,
-                };
+                *element = matches!(event.data.value().as_str(), "true")
             }
         })
     };

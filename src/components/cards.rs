@@ -19,7 +19,7 @@ pub fn RepoCard(
 
     let mut update_data_model_data = {
         move |repo_name: &str, name: &str| {
-            let url = GITHUB_MODEL_YAML.to_data_model_repo(&repo_name, &name);
+            let url = GITHUB_MODEL_YAML.to_data_model_repo(repo_name, name);
             data_model_data.set(DataModelData {
                 name: name.to_owned(),
                 url,
