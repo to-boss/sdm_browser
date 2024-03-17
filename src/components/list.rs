@@ -13,7 +13,7 @@ pub fn FilteredList(model_list: ModelList, data_model_data: Signal<DataModelData
             class: "size-full flex flex-col border rounded-lg gap-2 m-2 p-2",
             // Title
             h1 {
-                class: "text-slate-950 text-lg",
+                class: "font-bold text-slate-950 text-lg",
                 "Model Selection"
             },
             // FilterInput
