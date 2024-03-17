@@ -17,6 +17,16 @@ pub fn RepoCard(
     let item_len = data_model_repo.data_models.len();
     let collapse_icon = if collapsed() { "▲" } else { "▼" };
 
+    let mut update_data_model_data = {
+        move |repo_name: &str, name: &str| {
+            let url = GITHUB_MODEL_YAML.to_data_model_repo(&repo_name, &name);
+            data_model_data.set(DataModelData {
+                name: name.to_owned(),
+                url,
+            });
+        }
+    };
+
     rsx! {
         div {
             class: "w-full flex flex-row px-1 rounded-md",
@@ -54,13 +64,7 @@ pub fn RepoCard(
                         onclick: {
                             let repo_name = data_model_repo.name.clone();
                             let name = name.clone();
-                            move |_| {
-                                let url = GITHUB_MODEL_YAML.to_data_model_repo(&repo_name, &name);
-                                data_model_data.set(DataModelData {
-                                    name: name.clone(),
-                                    url
-                                });
-                            }
+                            move |_| update_data_model_data(&repo_name, &name)
                         },
                         div {
                             class: "",
