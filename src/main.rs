@@ -25,7 +25,7 @@ pub struct DataModelData {
 }
 
 fn App() -> Element {
-    let data_model_data = use_signal(|| DataModelData::default());
+    let data_model_data = use_signal(DataModelData::default);
 
     let model_list = use_resource(move || async move { ModelList::fetch().await });
     let model = use_resource(move || async move {
