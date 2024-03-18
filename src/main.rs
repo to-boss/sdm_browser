@@ -34,21 +34,21 @@ fn App() -> Element {
 
     let model_list = use_resource(move || async move { ModelList::fetch().await });
 
-    // Could you make this cache use cleaner?
     let current_model = use_resource(move || async move {
         let dmd_ref = current_model_data.read();
         let cache_ref = cache.read();
 
-        if let Some(model) = cache_ref.get(&dmd_ref.name) {
-            return Ok(model.clone());
+        if let Some(cached_model) = cache_ref.get(&dmd_ref.name) {
+            return Ok(cached_model.clone());
         }
         drop(cache_ref);
 
-        let model = Model::fetch(&dmd_ref).await;
-        if let Ok(model) = &model {
-            cache.with_mut(|c| c.insert(dmd_ref.name.clone(), model.clone()));
+        let result = Model::fetch(&dmd_ref).await;
+        if let Ok(fetched_model) = &result {
+            cache.with_mut(|cache| cache.insert(dmd_ref.name.clone(), fetched_model.clone()));
         }
-        model
+
+        result
     });
 
     rsx! {
