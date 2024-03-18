@@ -1,22 +1,31 @@
+use std::collections::HashMap;
+
 use dioxus::prelude::*;
 
-use crate::{components::cards::RepoCard, smartdata::models::ModelList, DataModelData};
+use crate::{
+    components::{cards::RepoCard, container::Container},
+    smartdata::models::{Model, ModelList},
+    DataModelData,
+};
 
 #[component]
-pub fn FilteredList(model_list: ModelList, data_model_data: Signal<DataModelData>) -> Element {
+pub fn FilteredList(
+    model_list: ModelList,
+    current_model_data: Signal<DataModelData>,
+    cache: Signal<HashMap<String, Model>>,
+) -> Element {
     let mut filter = use_signal(|| String::from(""));
 
     let filtered_entries = model_list.get_filtered_entries(&filter());
 
     rsx! {
-        div {
-            class: "size-full flex flex-col relative border rounded-lg gap-2 m-2 p-2",
+        Container {
             // Title
             h1 {
                 class: "font-bold text-slate-950 text-lg",
                 "Model Selection"
             },
-            // FilterInput
+            // FilterInput and List
             div {
                 class: "relative",
                 svg {
@@ -35,16 +44,16 @@ pub fn FilteredList(model_list: ModelList, data_model_data: Signal<DataModelData
                 },
                 input {
                     class: "flex h-9 pl-8 w-full rounded-md border
-                    border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
-                    placeholder:text-muted-foreground focus-visible:outline-none
-                    focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed
-                    disabled:opacity-50",
+                        border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        placeholder:text-muted-foreground focus-visible:outline-none
+                        focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed
+                        disabled:opacity-50",
                     value: "{filter}",
                     placeholder: "Search",
                     spellcheck: false,
                     oninput: move |event| filter.set(event.value())
                 },
-            },
+            }
             // List
             div {
                 class: "w-full divide-y border rounded-lg shadow-sm px-3 py-1 mb-1
@@ -59,12 +68,13 @@ pub fn FilteredList(model_list: ModelList, data_model_data: Signal<DataModelData
                         RepoCard {
                             data_model_repo: entry.clone(),
                             filter,
-                            data_model_data,
+                            cache,
+                            current_model_data,
                             collapsed: false,
                         }
                     }
                 }
-            }
+            },
         }
     }
 }

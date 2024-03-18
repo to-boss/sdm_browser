@@ -1,16 +1,19 @@
 use dioxus::prelude::*;
 
-use crate::smartdata::models::{GeoProperty, Model, Property};
+use crate::{
+    components::container::Container,
+    smartdata::models::{GeoProperty, Model, Property},
+};
 
 #[component]
 pub fn ModelComponent(model: Model, name: String) -> Element {
     let properties = model.clone().into_sorted_properties();
 
     rsx! {
-        div {
-            class: "size-full flex flex-col border rounded-lg gap-2 m-2 p-2",
+        Container {
+            // Title
             div {
-                class: "flex flex-col gap-2",
+                class: "w-60 flex flex-col gap-2",
                 div {
                     class: "flex flex-row my-auto",
                     h1 {
@@ -29,6 +32,7 @@ pub fn ModelComponent(model: Model, name: String) -> Element {
                 },
             }
             hr {},
+            // Properties
             Properties { properties },
         }
     }
@@ -37,6 +41,7 @@ pub fn ModelComponent(model: Model, name: String) -> Element {
 #[component]
 fn Properties(properties: Vec<Property>) -> Element {
     let mut marks: Signal<Vec<bool>> = use_signal(|| properties.iter().map(|p| p.marked).collect());
+
     let mut update_marks = move |event: Event<FormData>, i: usize| {
         marks.with_mut(|vec| {
             if let Some(element) = vec.get_mut(i) {

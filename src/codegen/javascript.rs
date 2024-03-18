@@ -1,4 +1,4 @@
-use std::fmt::{format, write, Display};
+use std::fmt::Display;
 
 pub struct Variable {
     declaration: Declaration,

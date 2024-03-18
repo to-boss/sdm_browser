@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use dioxus::prelude::*;
 
 use crate::{
-    smartdata::models::{data_model_yaml, DataModelRepo},
+    smartdata::models::{data_model_yaml, DataModelRepo, Model},
     DataModelData,
 };
 
@@ -12,8 +14,9 @@ const NAME_STYLE: &str = "p-1 m-1 text-sm text-slate-500 text-ellipsis rounded-m
 pub fn RepoCard(
     data_model_repo: DataModelRepo,
     filter: String,
+    cache: Signal<HashMap<String, Model>>,
+    current_model_data: Signal<DataModelData>,
     collapsed: bool,
-    data_model_data: Signal<DataModelData>,
 ) -> Element {
     let mut collapsed = use_signal(|| if !filter.is_empty() { false } else { collapsed });
     let mut selected_model = use_signal(|| "".to_string());
@@ -25,7 +28,7 @@ pub fn RepoCard(
         move |repo_name: &str, name: &str| {
             *selected_model.write() = name.to_owned();
             let url = data_model_yaml(repo_name, name);
-            data_model_data.set(DataModelData {
+            current_model_data.set(DataModelData {
                 repo_name: repo_name.to_owned(),
                 name: name.to_owned(),
                 url,

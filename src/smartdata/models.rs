@@ -103,7 +103,7 @@ pub struct Model {
 }
 
 impl Model {
-    pub async fn fetch(data_model_data: DataModelData) -> Result<Self, reqwest::Error> {
+    pub async fn fetch(data_model_data: &DataModelData) -> Result<Self, reqwest::Error> {
         let DataModelData {
             repo_name,
             name,
