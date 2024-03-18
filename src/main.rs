@@ -7,6 +7,7 @@ use crate::{
     smartdata::models::{Model, ModelList},
 };
 
+mod codegen;
 mod components;
 mod smartdata;
 
@@ -56,9 +57,9 @@ fn App() -> Element {
                     }},
                 }
             },
-            // Right side
+            // Middle
             div {
-                class: "flex-grow size-full",
+                class: "size-full",
                 {if let Some(Ok(model)) =  model.read().as_ref() {
                     rsx! { ModelComponent {
                         model: model.clone(),
@@ -67,6 +68,11 @@ fn App() -> Element {
                 } else {
                     rsx! { p {"No model selected."}}
                 }}
+            },
+            // Right side
+            div {
+                class: "",
+                "CODEGEN",
             }
         }
     }

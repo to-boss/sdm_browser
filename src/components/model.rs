@@ -52,11 +52,12 @@ fn Properties(properties: Vec<Property>) -> Element {
         },
         for (i, prop) in properties.iter().enumerate() {
             div {
-                class: "flex flex-row",
+                class: "flex flex-row gap-2",
                 label {
                     class: "text-sm text-slate-500",
                     "{prop.name}"
                 },
+                { prop.maybe_combobox() },
                 div {
                     class: "ml-auto flex flex-row gap-2",
                     if prop.required {
@@ -82,7 +83,7 @@ impl Property {
         if self.one_of.is_some() && self.name == "location" {
             return Some(rsx! {
                 select {
-                    class: "border text-sm text-slate-500",
+                    class: "border text-xs text-slate-500",
                     for geo_prop in GeoProperty::array() {
                         option {
                             value: "{geo_prop.str()}",
