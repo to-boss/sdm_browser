@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::smartdata::models::{Model, Property};
+use crate::smartdata::models::{GeoProperty, Model, Property};
 
 #[component]
 pub fn ModelComponent(model: Model, name: String) -> Element {
@@ -73,5 +73,25 @@ fn Properties(properties: Vec<Property>) -> Element {
                 }
             }
         }
+    }
+}
+
+impl Property {
+    pub fn maybe_combobox(&self) -> Option<Element> {
+        // TODO: missing other one_of combobox options
+        if self.one_of.is_some() && self.name == "location" {
+            return Some(rsx! {
+                select {
+                    class: "border text-sm text-slate-500",
+                    for geo_prop in GeoProperty::array() {
+                        option {
+                            value: "{geo_prop.str()}",
+                             "{geo_prop.str()}"
+                        }
+                    }
+                }
+            });
+        }
+        None
     }
 }
