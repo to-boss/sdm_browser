@@ -3,8 +3,18 @@ use std::{cmp::Ordering, collections::BTreeMap};
 use dioxus::prelude::*;
 use serde::{Deserialize, Deserializer, Serialize};
 
+use crate::DataModelData;
+
 const OFFICIAL_LIST_LINK: &str = "https://raw.githubusercontent.com\
 /smart-data-models/data-models/master/specs/AllSubjects/official_list_data_models.json";
+
+pub fn data_model_yaml(data_model: &str, repo: &str) -> String {
+    format!("https://raw.githubusercontent.com/smart-data-models/dataModel.{data_model}/master/{repo}/model.yaml")
+}
+
+pub fn data_model_github(repo_name: &str, name: &str) -> String {
+    format!("https://github.com/smart-data-models/dataModel.{repo_name}/tree/master/{name}",)
+}
 
 #[derive(Deserialize, Serialize, Debug, Props, PartialEq, Clone)]
 pub struct ModelList {
@@ -69,29 +79,6 @@ where
     Ok(name.to_string())
 }
 
-pub struct Link<'a> {
-    github_user_content: &'a str,
-    master: &'a str,
-    ending: &'a str,
-}
-
-impl<'a> Link<'a> {
-    pub fn to_data_model_repo(&self, repo_name: &str, data_model: &str) -> String {
-        format!(
-            "{githubusercontent}{repo_name}{master}{data_model}{yaml}",
-            githubusercontent = self.github_user_content,
-            master = self.master,
-            yaml = self.ending
-        )
-    }
-}
-
-pub const GITHUB_MODEL_YAML: Link = Link {
-    github_user_content: "https://raw.githubusercontent.com/smart-data-models/dataModel.",
-    master: "/master/",
-    ending: "/model.yaml",
-};
-
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Model {
     pub description: String,
@@ -106,19 +93,29 @@ pub struct Model {
     #[serde(rename = "x-license-url")]
     pub license_url: String,
     #[serde(rename = "x-model-schema")]
-    pub model_schema: String,
+    pub schema: String,
     #[serde(rename = "x-model-tags")]
-    pub model_tags: String,
+    pub tags: String,
     #[serde(rename = "x-version")]
     pub version: String,
+    #[serde(skip_deserializing)]
+    pub url: String,
 }
 
 impl Model {
-    pub async fn fetch(url: &str) -> Result<Self, reqwest::Error> {
+    pub async fn fetch(data_model_data: DataModelData) -> Result<Self, reqwest::Error> {
+        let DataModelData {
+            repo_name,
+            name,
+            url,
+        } = data_model_data;
+
         let body = reqwest::get(url).await?.text().await?;
 
         let mut yaml: BTreeMap<String, Model> = serde_yaml::from_str(&body).unwrap();
-        let (_, model) = yaml.pop_first().expect("we have a object layer");
+        let (_, mut model) = yaml.pop_first().expect("we have a object layer");
+
+        model.url = data_model_github(&repo_name, &name);
 
         Ok(model)
     }
