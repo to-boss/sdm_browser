@@ -9,14 +9,25 @@ pub fn ModelComponent(model: Model, name: String) -> Element {
     rsx! {
         div {
             class: "size-full flex flex-col border rounded-lg gap-2 m-2 p-2",
-            h1 {
-                class: "font-bold text-slate-950 text-lg",
-                "{name}"
-            },
-            p {
-                class: "text-xs text-slate-500",
-                "{model.description}"
-            },
+            div {
+                class: "flex flex-col gap-2",
+                div {
+                    class: "flex flex-row my-auto",
+                    h1 {
+                        class: "font-bold text-slate-950 text-lg",
+                        "{name}"
+                    },
+                    a {
+                        class: "ml-auto text-xs text-blue-400 hover:underline",
+                        href: model.url,
+                        "(link)"
+                    }
+                }
+                p {
+                    class: "text-xs text-slate-500",
+                    "{model.description}"
+                },
+            }
             hr {},
             Properties { properties },
         }

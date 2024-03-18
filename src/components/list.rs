@@ -10,7 +10,7 @@ pub fn FilteredList(model_list: ModelList, data_model_data: Signal<DataModelData
 
     rsx! {
         div {
-            class: "size-full flex flex-col border rounded-lg gap-2 m-2 p-2",
+            class: "size-full flex flex-col relative border rounded-lg gap-2 m-2 p-2",
             // Title
             h1 {
                 class: "font-bold text-slate-950 text-lg",

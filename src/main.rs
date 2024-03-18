@@ -20,6 +20,7 @@ fn main() {
 
 #[derive(Default, Clone)]
 pub struct DataModelData {
+    repo_name: String,
     name: String,
     url: String,
 }
@@ -30,7 +31,7 @@ fn App() -> Element {
     let model_list = use_resource(move || async move { ModelList::fetch().await });
     let model = use_resource(move || async move {
         let data_model_data = data_model_data.read().clone();
-        Model::fetch(data_model_data.url.as_str()).await
+        Model::fetch(data_model_data).await
     });
 
     rsx! {
