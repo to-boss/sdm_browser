@@ -192,3 +192,36 @@ pub struct XNgsi {
     pub typ: Option<String>,
     pub units: Option<String>,
 }
+
+pub enum GeoProperty {
+    Point,
+    LineString,
+    Polygon,
+    MultiPoint,
+    MultiLineString,
+    MultiPolygon,
+}
+
+impl GeoProperty {
+    pub fn str(&self) -> &'static str {
+        match self {
+            GeoProperty::Point => "Point",
+            GeoProperty::LineString => "LineString",
+            GeoProperty::Polygon => "Polygon",
+            GeoProperty::MultiPoint => "MultiPoint",
+            GeoProperty::MultiLineString => "MultiLineString",
+            GeoProperty::MultiPolygon => "MultiPolygon",
+        }
+    }
+
+    pub fn array() -> [GeoProperty; 6] {
+        [
+            GeoProperty::Point,
+            GeoProperty::LineString,
+            GeoProperty::Polygon,
+            GeoProperty::MultiPoint,
+            GeoProperty::MultiLineString,
+            GeoProperty::MultiPolygon,
+        ]
+    }
+}
