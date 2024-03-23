@@ -34,18 +34,17 @@ impl ModelCache {
 
     pub async fn get_or_fetch_and_insert(
         &mut self,
-        data_model_data: &ModelData,
+        model_data: &ModelData,
     ) -> Result<ParsedModel, anyhow::Error> {
-        let res = self.inner.get(&data_model_data.name);
-        if res.is_some() {
-            return res.cloned().context("can't happen");
+        if let Some(cached_model) = self.inner.get(&model_data.name) {
+            return Ok(cached_model.clone());
         }
 
-        let res = Model::fetch_and_parse(data_model_data).await;
+        let res = Model::fetch_and_parse(model_data).await;
         if let Ok(fetched_model) = &res {
             let parsed_model = fetched_model.to_owned();
             self.inner
-                .insert(data_model_data.name.to_owned(), parsed_model.clone());
+                .insert(model_data.name.to_owned(), parsed_model.clone());
             return Ok(parsed_model);
         }
 
