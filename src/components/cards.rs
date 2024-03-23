@@ -2,105 +2,102 @@ use dioxus::prelude::*;
 
 use crate::{
     smartdata::models::{data_model_yaml, DataModelRepo},
-    DataModelData,
+    ModelData,
 };
 
 #[component]
 pub fn RepoCard(
     data_model_repo: DataModelRepo,
     filter: String,
-    data_model_data: Signal<DataModelData>,
+    model_data: Signal<Option<ModelData>>,
     collapsed: bool,
 ) -> Element {
     let mut collapsed = use_signal(|| if !filter.is_empty() { false } else { collapsed });
-    let mut selected_model = use_signal(|| "".to_string());
 
     let item_len = data_model_repo.data_models.len();
     let collapse_icon = if collapsed() { "▲" } else { "▼" };
 
-    let mut update_data_model_data = {
-        move |repo_name: &str, name: &str| {
-            *selected_model.write() = name.to_owned();
-            let url = data_model_yaml(repo_name, name);
-            data_model_data.set(DataModelData {
-                repo_name: repo_name.to_owned(),
-                name: name.to_owned(),
-                url,
-            });
+    let mut update_model_data = {
+        move |repo: String, name: String| {
+            let url = data_model_yaml(&repo, &name);
+            model_data.set(Some(ModelData { repo, name, url }));
         }
     };
 
-    rsx! {
-        div {
-            class: "w-full flex flex-row px-1 rounded-md",
-            onclick: move |_| collapsed.set(!collapsed()),
+    let is_selected_name = |name: &str| {
+        if let Some(model_data) = model_data.read().as_ref() {
+            model_data.name.as_str() == name
+        } else {
+            false
+        }
+    };
+
+    let rendered_list = rsx!(ul {
+        for name in data_model_repo.data_models.iter() {
             div {
-                class: "my-2 w-full flex flex-row hover:cursor-pointer",
-                h1 {
-                    class: "w-64 text-ellipsis overflow-hidden text-base
-                            font-medium tracking-tight text-slate-900",
-                    "{data_model_repo.name}",
+                onclick: {
+                    let repo = data_model_repo.name.clone();
+                    let name = name.clone();
+                    move |_| update_model_data(repo.clone(), name.clone())
+                },
+                FilteredName {
+                    name,
+                    filter: filter.clone(),
+                    is_selected: is_selected_name(name),
+               }
+            }
+        }
+    });
+
+    rsx!(div {
+        class: "w-full flex flex-row px-1 rounded-md",
+        onclick: move |_| collapsed.set(!collapsed()),
+        div {
+            class: "my-2 w-full flex flex-row hover:cursor-pointer",
+            h1 {
+                class: "w-64 text-ellipsis overflow-hidden text-base
+                        font-medium tracking-tight text-slate-900",
+                "{data_model_repo.name}",
+            },
+            div {
+                class: "ml-auto my-auto flex flex-row gap-2",
+                span {
+                    class: "text-xs text-slate-300 ",
+                    "({item_len})",
+                },
+                a {
+                    class: "text-xs text-blue-400 hover:underline",
+                    href: data_model_repo.link,
+                    "(link)"
                 },
                 div {
-                    class: "ml-auto my-auto flex flex-row gap-2",
-                    span {
-                        class: "text-xs text-slate-300 ",
-                        "({item_len})",
-                    },
-                    a {
-                        class: "text-xs text-blue-400 hover:underline",
-                        href: data_model_repo.link,
-                        "(link)"
-                    },
-                    div {
-                        class: "text-xs text-slate-500",
-                        "{collapse_icon}",
-                    },
+                    class: "text-xs text-slate-500",
+                    "{collapse_icon}",
                 },
             },
         },
-        if !collapsed() {
-            ul {
-                class: "w-full",
-                for name in data_model_repo.data_models.iter() {
-                    div {
-                        onclick: {
-                            let repo_name = data_model_repo.name.clone();
-                            let name = name.clone();
-                            move |_| update_data_model_data(&repo_name, &name)
-                        },
-                        FilteredName {
-                            name,
-                            selected_model,
-                            filter: filter.clone(),
-                        }
-                    }
-                }
-            }
-        }
-    }
+    },
+    if !collapsed() {
+        {rendered_list}
+    })
 }
 
-const NAME_STYLE: &str = "p-1 m-1 text-sm text-slate-500 text-ellipsis rounded-md
-    hover:cursor-pointer";
-
 #[component]
-fn FilteredName(name: String, filter: String, selected_model: String) -> Element {
-    // TODO(bug): This only changes the color if the model is under the same repo
-    // TODO(bug): after resetting the filter the highlight fades
-    let highlight_bg = if selected_model == name {
+fn FilteredName(name: String, filter: String, is_selected: bool) -> Element {
+    const NAME_STYLE: &str = "p-1 m-1 text-sm text-slate-500 text-ellipsis rounded-md
+        hover:cursor-pointer";
+
+    let highlight_bg = if is_selected {
         "bg-green-100 hover:bg-green-200"
     } else {
         "hover:bg-gray-100"
     };
 
     if filter.is_empty() {
-        return rsx! {
-            li {
-                class: "{NAME_STYLE} {highlight_bg}",
-                "{name}"
-            }
-        };
+        return rsx!(li {
+            class: "{NAME_STYLE} {highlight_bg}",
+            "{name}"
+        });
     }
 
     if !name.contains(&filter) {
@@ -125,21 +122,22 @@ fn FilteredName(name: String, filter: String, selected_model: String) -> Element
         })
         .collect();
 
-    rsx! {
-        li {
-            class: "{NAME_STYLE} {highlight_bg}",
-            for (text, equals) in splits.iter() {
-                if *equals {
-                    mark {
-                        class: "font-semibold bg-rose-200",
-                        "{text}"
-                    }
-                } else {
+    let rendered_splits = splits.iter().map(|(text, equals)| {
+        rsx!(if *equals {
+                mark {
+                    class: "font-semibold bg-rose-200",
                     "{text}"
                 }
+            } else {
+                "{text}"
             }
-        }
-    }
+        )
+    });
+
+    rsx!(li {
+        class: "{NAME_STYLE} {highlight_bg}",
+        {rendered_splits}
+    })
 }
 
 #[cfg(test)]

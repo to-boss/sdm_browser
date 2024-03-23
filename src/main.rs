@@ -4,8 +4,8 @@ use dioxus::{desktop::Config, prelude::*};
 
 use crate::{
     cache::ModelCache,
-    components::{container::Container, list::FilteredList, model::ModelComponent},
-    smartdata::models::{ModelList, ParsedModel},
+    components::{list::FilteredList, model::Model},
+    smartdata::models::ModelList,
 };
 
 mod cache;
@@ -22,14 +22,14 @@ fn main() {
 }
 
 #[derive(Default, Debug, Clone)]
-pub struct DataModelData {
-    repo_name: String,
+pub struct ModelData {
+    repo: String,
     name: String,
     url: String,
 }
 
-impl DataModelData {
-    pub fn maybe_current(&self) -> Option<&str> {
+impl ModelData {
+    pub fn name(&self) -> Option<&str> {
         if self.name.is_empty() {
             return None;
         }
@@ -37,53 +37,53 @@ impl DataModelData {
     }
 }
 
+#[component]
+fn ShowError(error: String) -> Element {
+    rsx!(p {
+        class:"bg-red-400 p-4 m-4 text-xs",
+        "{error}"
+    })
+}
+
 fn App() -> Element {
+    // SIGNALS
     let mut cache = use_context_provider(|| Signal::new(ModelCache::new()));
-    let data_model_data = use_signal(DataModelData::default);
+    let model_data = use_signal(|| None);
 
+    // RESOURCES and RENDERED RESOURCE
     let model_list = use_resource(|| async move { ModelList::fetch().await });
-    let current_model =
-        use_resource(
-            move || async move { cache.write().get_or_fetch(&data_model_data.read()).await },
-        );
-
-    let rendered_model_component = match &*current_model.read() {
-        Some(Ok(model)) => rsx!(ModelComponent {
-            model: model.clone(),
-            name: data_model_data.read().name.clone(),
+    let rendered_model_list = match &*model_list.read() {
+        Some(Ok(list)) => rsx!(FilteredList {
+            list: list.to_owned(),
+            model_data: model_data.clone(),
         }),
-        Some(Err(e)) => rsx!(p { class:"", "Error: {e}"}),
-        _ => rsx!(p { class:"", "Loading..."}),
+        Some(Err(err)) => rsx!(ShowError {
+            error: err.to_string(),
+        }),
+        None => None,
     };
 
-    rsx! {
-        // Main Container
-        div {
-            class: "bg-white size-full flex flex-row gap-2 overflow-hidden",
-            // Left Side
-            div {
-                class: "h-screen w-96 shrink-0",
-                match &*model_list.read() {
-                    Some(Ok(model_list)) => rsx! {
-                        FilteredList{
-                            model_list: model_list.clone(),
-                            data_model_data,
-                        }
-                    },
-                    Some(Err(err)) => rsx! { p {
-                        "Error: {err}"
-                    }},
-                    None => rsx! { p {
-                        "Loading model list..."
-                    }},
-                }
-            },
-            // Middle
-            {rendered_model_component}
-            // Right side
-            Container {
-                "CODEGEN",
-            }
+    let selected_model = use_resource(move || async move {
+        if let Some(model_data) = model_data.read().as_ref() {
+            return Some(cache.write().get_or_fetch_and_insert(model_data).await);
         }
-    }
+        None
+    });
+    let rendered_selected_model = match &*selected_model.read() {
+        // The nesting is kinda ugly, but the logic in the resource is better this way
+        Some(Some(Ok(model))) => rsx!(Model {
+            model: model.clone()
+        }),
+        Some(Some(Err(err))) => rsx!(ShowError {
+            error: err.to_string(),
+        }),
+        Some(None) => None,
+        None => None,
+    };
+
+    rsx!(div {
+        class: "flex flex-row gap-1",
+        {rendered_model_list},
+        {rendered_selected_model},
+    })
 }

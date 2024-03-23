@@ -3,7 +3,7 @@ use std::{cmp::Ordering, collections::BTreeMap};
 use dioxus::prelude::*;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::DataModelData;
+use crate::ModelData;
 
 const OFFICIAL_LIST_LINK: &str = "https://raw.githubusercontent.com\
 /smart-data-models/data-models/master/specs/AllSubjects/official_list_data_models.json";
@@ -81,6 +81,7 @@ where
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct ParsedModel {
+    pub name: String,
     pub description: String,
     pub properties: Vec<Property>,
     pub required: Vec<String>,
@@ -115,12 +116,14 @@ pub struct Model {
     pub version: String,
     #[serde(skip_deserializing)]
     pub url: String,
+    #[serde(skip_deserializing)]
+    pub name: String,
 }
 
 impl Model {
-    pub async fn fetch(data_model_data: &DataModelData) -> Result<Self, reqwest::Error> {
-        let DataModelData {
-            repo_name,
+    pub async fn fetch(data_model_data: &ModelData) -> Result<Self, reqwest::Error> {
+        let ModelData {
+            repo: repo_name,
             name,
             url,
         } = data_model_data;
@@ -131,12 +134,13 @@ impl Model {
         let (_, mut model) = yaml.pop_first().expect("we have a object layer");
 
         model.url = data_model_github(&repo_name, &name);
+        model.name = name.clone();
 
         Ok(model)
     }
 
     pub async fn fetch_and_parse(
-        data_model_data: &DataModelData,
+        data_model_data: &ModelData,
     ) -> Result<ParsedModel, anyhow::Error> {
         let res = Model::fetch(data_model_data).await?.into_parsed();
         Ok(res)
@@ -180,6 +184,7 @@ impl Model {
         });
 
         ParsedModel {
+            name: self.name,
             description: self.description,
             properties,
             required: self.required,

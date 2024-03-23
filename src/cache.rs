@@ -4,7 +4,7 @@ use anyhow::{bail, Context};
 
 use crate::{
     smartdata::models::{Model, ParsedModel},
-    DataModelData,
+    ModelData,
 };
 
 #[derive(Default, Debug, Clone)]
@@ -32,11 +32,12 @@ impl ModelCache {
         self.inner.get(key)
     }
 
-    pub async fn get_or_fetch(
+    pub async fn get_or_fetch_and_insert(
         &mut self,
-        data_model_data: &DataModelData,
+        data_model_data: &ModelData,
     ) -> Result<ParsedModel, anyhow::Error> {
         if data_model_data.name.is_empty() {
+            // Better way to handle this?
             bail!("No model selected.");
         }
 

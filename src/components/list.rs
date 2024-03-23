@@ -3,19 +3,18 @@ use dioxus::prelude::*;
 use crate::{
     components::{cards::RepoCard, container::Container},
     smartdata::models::ModelList,
-    DataModelData,
+    ModelData,
 };
 
 #[component]
-pub fn FilteredList(model_list: ModelList, data_model_data: Signal<DataModelData>) -> Element {
+pub fn FilteredList(list: ModelList, model_data: Signal<Option<ModelData>>) -> Element {
     let mut filter = use_signal(|| String::from(""));
-
-    let filtered_entries = model_list.get_filtered_entries(&filter());
-    let filtered_entries_rendered = filtered_entries.iter().map(|entry| {
+    let filtered_entries = list.get_filtered_entries(&filter());
+    let filtered_entries_rendered = filtered_entries.iter().map(|data_model_repo| {
         rsx!(RepoCard {
-            data_model_repo: entry.clone(),
+            data_model_repo: data_model_repo.clone(),
             filter,
-            data_model_data,
+            model_data,
             collapsed: false,
         })
     });

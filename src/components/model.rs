@@ -7,7 +7,8 @@ use crate::{
 };
 
 #[component]
-pub fn ModelComponent(model: ParsedModel, name: String) -> Element {
+pub fn Model(model: ParsedModel) -> Element {
+    let name = model.name.clone();
     let url = model.url.clone();
     let description = model.description.clone();
 
@@ -37,6 +38,8 @@ pub fn ModelComponent(model: ParsedModel, name: String) -> Element {
             // Properties
             if !name.is_empty() {
                 Properties { selected_model: name}
+            } else {
+                p { "Loading..." }
             }
         }
     }
@@ -45,12 +48,6 @@ pub fn ModelComponent(model: ParsedModel, name: String) -> Element {
 #[component]
 fn Properties(selected_model: String) -> Element {
     let mut cache = consume_context::<Signal<ModelCache>>();
-
-    let mut update_property = move |key: &str, i: usize| {
-        cache.write().flip_checked(key, i);
-    };
-
-    //let cache_copy = cache.read().clone();
 
     // We get a panick when getting a model which hasnt been cached yet and is getting fetched
     // probably because of the async stuff...
@@ -83,7 +80,7 @@ fn Properties(selected_model: String) -> Element {
                             checked: prop.checked,
                             onchange: {
                                 let selected_model = selected_model.clone();
-                                move |_| update_property(&selected_model,i)
+                                move |_| cache.write().flip_checked(&selected_model, i)
                             },
                         },
                     }
