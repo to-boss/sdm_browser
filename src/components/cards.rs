@@ -1,21 +1,15 @@
-use std::collections::HashMap;
-
 use dioxus::prelude::*;
 
 use crate::{
-    smartdata::models::{data_model_yaml, DataModelRepo, Model},
+    smartdata::models::{data_model_yaml, DataModelRepo},
     DataModelData,
 };
-
-const NAME_STYLE: &str = "p-1 m-1 text-sm text-slate-500 text-ellipsis rounded-md
-    hover:cursor-pointer";
 
 #[component]
 pub fn RepoCard(
     data_model_repo: DataModelRepo,
     filter: String,
-    cache: Signal<HashMap<String, Model>>,
-    current_model_data: Signal<DataModelData>,
+    data_model_data: Signal<DataModelData>,
     collapsed: bool,
 ) -> Element {
     let mut collapsed = use_signal(|| if !filter.is_empty() { false } else { collapsed });
@@ -28,7 +22,7 @@ pub fn RepoCard(
         move |repo_name: &str, name: &str| {
             *selected_model.write() = name.to_owned();
             let url = data_model_yaml(repo_name, name);
-            current_model_data.set(DataModelData {
+            data_model_data.set(DataModelData {
                 repo_name: repo_name.to_owned(),
                 name: name.to_owned(),
                 url,
@@ -75,7 +69,11 @@ pub fn RepoCard(
                             let name = name.clone();
                             move |_| update_data_model_data(&repo_name, &name)
                         },
-                        {color_name_based_on_filter(&name,  &filter, selected_model)}
+                        FilteredName {
+                            name,
+                            selected_model,
+                            filter: filter.clone(),
+                        }
                     }
                 }
             }
@@ -83,21 +81,14 @@ pub fn RepoCard(
     }
 }
 
-struct FilterSplit<'a> {
-    s: &'a str,
-    equals_filter: bool,
-}
+const NAME_STYLE: &str = "p-1 m-1 text-sm text-slate-500 text-ellipsis rounded-md
+    hover:cursor-pointer";
 
-impl<'a> FilterSplit<'a> {
-    fn new(s: &'a str, equals_filter: bool) -> Self {
-        FilterSplit { s, equals_filter }
-    }
-}
-
-fn color_name_based_on_filter(name: &str, filter: &str, selected_model: Signal<String>) -> Element {
+#[component]
+fn FilteredName(name: String, filter: String, selected_model: String) -> Element {
     // TODO(bug): This only changes the color if the model is under the same repo
     // TODO(bug): after resetting the filter the highlight fades
-    let highlight_bg = if selected_model() == name {
+    let highlight_bg = if selected_model == name {
         "bg-green-100 hover:bg-green-200"
     } else {
         "hover:bg-gray-100"
@@ -112,43 +103,47 @@ fn color_name_based_on_filter(name: &str, filter: &str, selected_model: Signal<S
         };
     }
 
-    if !name.contains(filter) {
-        return rsx! { li {
-            class: "hidden",
-            "{name}"
-        }};
+    if !name.contains(&filter) {
+        return None;
     }
 
-    // There is probably an easier way to do this...
-    let splits = name.split_inclusive(filter);
-    let final_splits: Vec<_> = splits.into_iter().fold(Vec::new(), |mut vec, s| {
-        if let Some((a, b)) = s.split_once(filter) {
-            if !a.is_empty() {
-                vec.push(FilterSplit::new(a, false));
+    let splits: Vec<_> = name
+        .split_inclusive(&filter)
+        .flat_map(|split| match split.split_once(&filter) {
+            Some((a, b)) => {
+                let mut vec = vec![];
+                if !a.is_empty() {
+                    vec.push((a, false));
+                }
+                vec.push((&filter, true));
+                if !b.is_empty() {
+                    vec.push((b, false));
+                }
+                vec
             }
-            vec.push(FilterSplit::new(filter, true));
-            if !b.is_empty() {
-                vec.push(FilterSplit::new(b, false));
-            }
-        } else {
-            vec.push(FilterSplit::new(s, false));
-        }
-        vec
-    });
+            _ => vec![(split, false)],
+        })
+        .collect();
 
     rsx! {
         li {
             class: "{NAME_STYLE} {highlight_bg}",
-            for split in final_splits.iter() {
-                if split.equals_filter {
+            for (text, equals) in splits.iter() {
+                if *equals {
                     mark {
                         class: "font-semibold bg-rose-200",
-                        "{split.s}"
+                        "{text}"
                     }
                 } else {
-                    "{split.s}"
+                    "{text}"
                 }
             }
         }
     }
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn test() {}
 }

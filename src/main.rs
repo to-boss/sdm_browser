@@ -1,14 +1,14 @@
 #![allow(non_snake_case)]
 
-use std::collections::HashMap;
-
 use dioxus::{desktop::Config, prelude::*};
 
 use crate::{
+    cache::ModelCache,
     components::{container::Container, list::FilteredList, model::ModelComponent},
-    smartdata::models::{Model, ModelList},
+    smartdata::models::{ModelList, ParsedModel},
 };
 
+mod cache;
 mod codegen;
 mod components;
 mod smartdata;
@@ -28,28 +28,33 @@ pub struct DataModelData {
     url: String,
 }
 
+impl DataModelData {
+    pub fn maybe_current(&self) -> Option<&str> {
+        if self.name.is_empty() {
+            return None;
+        }
+        Some(&self.name)
+    }
+}
+
 fn App() -> Element {
-    let current_model_data = use_signal(DataModelData::default);
-    let mut cache = use_signal(HashMap::<String, Model>::new);
+    let mut cache = use_context_provider(|| Signal::new(ModelCache::new()));
+    let data_model_data = use_signal(DataModelData::default);
 
-    let model_list = use_resource(move || async move { ModelList::fetch().await });
+    let model_list = use_resource(|| async move { ModelList::fetch().await });
+    let current_model =
+        use_resource(
+            move || async move { cache.write().get_or_fetch(&data_model_data.read()).await },
+        );
 
-    let current_model = use_resource(move || async move {
-        let dmd_ref = current_model_data.read();
-        let cache_ref = cache.read();
-
-        if let Some(cached_model) = cache_ref.get(&dmd_ref.name) {
-            return Ok(cached_model.clone());
-        }
-        drop(cache_ref);
-
-        let result = Model::fetch(&dmd_ref).await;
-        if let Ok(fetched_model) = &result {
-            cache.with_mut(|cache| cache.insert(dmd_ref.name.clone(), fetched_model.clone()));
-        }
-
-        result
-    });
+    let rendered_model_component = match &*current_model.read() {
+        Some(Ok(model)) => rsx!(ModelComponent {
+            model: model.clone(),
+            name: data_model_data.read().name.clone(),
+        }),
+        Some(Err(e)) => rsx!(p { class:"", "Error: {e}"}),
+        _ => rsx!(p { class:"", "Loading..."}),
+    };
 
     rsx! {
         // Main Container
@@ -62,8 +67,7 @@ fn App() -> Element {
                     Some(Ok(model_list)) => rsx! {
                         FilteredList{
                             model_list: model_list.clone(),
-                            current_model_data,
-                            cache,
+                            data_model_data,
                         }
                     },
                     Some(Err(err)) => rsx! { p {
@@ -75,17 +79,7 @@ fn App() -> Element {
                 }
             },
             // Middle
-            {
-                if let Some(Ok(model)) =  &*current_model.read() {
-                    rsx! { ModelComponent {
-                            model: model.clone(),
-                            name: current_model_data.read().name.clone(),
-                        }
-                    }
-                } else {
-                    rsx! { Container { "No model selected." } }
-                }
-            }
+            {rendered_model_component}
             // Right side
             Container {
                 "CODEGEN",

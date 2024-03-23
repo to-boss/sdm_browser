@@ -1,26 +1,27 @@
-use std::collections::HashMap;
-
 use dioxus::prelude::*;
 
 use crate::{
     components::{cards::RepoCard, container::Container},
-    smartdata::models::{Model, ModelList},
+    smartdata::models::ModelList,
     DataModelData,
 };
 
 #[component]
-pub fn FilteredList(
-    model_list: ModelList,
-    current_model_data: Signal<DataModelData>,
-    cache: Signal<HashMap<String, Model>>,
-) -> Element {
+pub fn FilteredList(model_list: ModelList, data_model_data: Signal<DataModelData>) -> Element {
     let mut filter = use_signal(|| String::from(""));
 
     let filtered_entries = model_list.get_filtered_entries(&filter());
+    let filtered_entries_rendered = filtered_entries.iter().map(|entry| {
+        rsx!(RepoCard {
+            data_model_repo: entry.clone(),
+            filter,
+            data_model_data,
+            collapsed: false,
+        })
+    });
 
-    rsx! {
+    rsx!(
         Container {
-            // Title
             h1 {
                 class: "font-bold text-slate-950 text-lg",
                 "Model Selection"
@@ -64,17 +65,9 @@ pub fn FilteredList(
                         "No entries matching."
                     }
                 } else {
-                    for entry in filtered_entries {
-                        RepoCard {
-                            data_model_repo: entry.clone(),
-                            filter,
-                            cache,
-                            current_model_data,
-                            collapsed: false,
-                        }
-                    }
+                    {filtered_entries_rendered}
                 }
             },
         }
-    }
+    )
 }

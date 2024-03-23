@@ -80,6 +80,21 @@ where
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct ParsedModel {
+    pub description: String,
+    pub properties: Vec<Property>,
+    pub required: Vec<String>,
+    pub typ: String,
+    pub derived_from: String,
+    pub disclaimer: String,
+    pub license_url: String,
+    pub schema: String,
+    pub tags: String,
+    pub version: String,
+    pub url: String,
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Model {
     pub description: String,
     pub properties: BTreeMap<String, Property>,
@@ -120,6 +135,66 @@ impl Model {
         Ok(model)
     }
 
+    pub async fn fetch_and_parse(
+        data_model_data: &DataModelData,
+    ) -> Result<ParsedModel, anyhow::Error> {
+        let res = Model::fetch(data_model_data).await?.into_parsed();
+        Ok(res)
+    }
+
+    pub fn into_parsed(self) -> ParsedModel {
+        let mut properties = Vec::with_capacity(self.properties.len());
+        for (key, mut val) in self.properties.into_iter() {
+            if self.required.contains(&key) {
+                val.required = true;
+                val.checked = true;
+            }
+            val.name = key;
+            properties.push(val)
+        }
+
+        // Sorting inspired by this answer on SO
+        // https://stackoverflow.com/questions/46512227/sort-a-vector-with-a-comparator-which-changes-its-behavior-dynamically/46514082#46514082
+        // First we give the importance order
+        // We want marked fields to be at the top, then we sort marked fields after name.len()
+        // Fields which are not marked are sorted after their name in alphabetical order
+        enum Field {
+            Marked,
+            Name,
+        }
+
+        let orders = [Field::Marked, Field::Name];
+        properties.sort_by(|a, b| {
+            orders.iter().fold(Ordering::Equal, |acc, field| {
+                acc.then_with(|| match field {
+                    Field::Marked => {
+                        if a.checked && b.checked {
+                            a.name.len().cmp(&b.name.len())
+                        } else {
+                            b.checked.cmp(&a.checked)
+                        }
+                    }
+                    Field::Name => a.name.cmp(&b.name),
+                })
+            })
+        });
+
+        ParsedModel {
+            description: self.description,
+            properties,
+            required: self.required,
+            typ: self.typ,
+            derived_from: self.derived_from,
+            disclaimer: self.disclaimer,
+            license_url: self.license_url,
+            schema: self.schema,
+            tags: self.tags,
+            version: self.version,
+            url: self.url,
+        }
+    }
+
+    /*
     pub fn into_sorted_properties(self) -> Vec<Property> {
         let mut properties = Vec::with_capacity(self.properties.len());
         for (key, mut val) in self.properties.into_iter() {
@@ -159,6 +234,7 @@ impl Model {
 
         properties
     }
+    */
 }
 
 #[derive(Default, Debug, Deserialize, PartialEq, Clone)]
@@ -177,7 +253,7 @@ pub struct Property {
     #[serde(rename = "x-ngsi")]
     pub xngsi: Option<XNgsi>,
     #[serde(skip_deserializing)]
-    pub marked: bool,
+    pub checked: bool,
     #[serde(skip_deserializing)]
     pub name: String,
     #[serde(skip_deserializing)]
