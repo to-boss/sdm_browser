@@ -36,11 +36,6 @@ impl ModelCache {
         &mut self,
         data_model_data: &ModelData,
     ) -> Result<ParsedModel, anyhow::Error> {
-        if data_model_data.name.is_empty() {
-            // Better way to handle this?
-            bail!("No model selected.");
-        }
-
         let res = self.inner.get(&data_model_data.name);
         if res.is_some() {
             return res.cloned().context("can't happen");
