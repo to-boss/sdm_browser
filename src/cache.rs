@@ -22,7 +22,6 @@ impl ModelCache {
     pub fn flip_checked(&mut self, key: &str, index: usize) {
         if let Some(parsed_model) = self.inner.get_mut(key) {
             if let Some(property) = parsed_model.properties.get_mut(index) {
-                println!("flipped {} from {}", property.name, property.checked);
                 property.checked = !property.checked;
             }
         }
