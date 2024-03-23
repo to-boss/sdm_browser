@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+#[allow(dead_code)]
 pub struct Variable {
     declaration: Declaration,
     typ: Type,
@@ -7,6 +8,7 @@ pub struct Variable {
     value: String,
 }
 
+#[allow(dead_code)]
 impl Variable {
     fn with_jsdoc(&self) -> String {
         format!(
@@ -25,6 +27,7 @@ impl Display for Variable {
     }
 }
 
+#[allow(dead_code)]
 pub enum Type {
     String,
     Number,
@@ -57,6 +60,7 @@ impl Display for Type {
     }
 }
 
+#[allow(dead_code)]
 pub enum Declaration {
     Const,
     Let,
