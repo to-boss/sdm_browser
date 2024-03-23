@@ -55,7 +55,7 @@ fn App() -> Element {
     let rendered_model_list = match &*model_list.read() {
         Some(Ok(list)) => rsx!(FilteredList {
             list: list.to_owned(),
-            model_data: model_data.clone(),
+            model_data,
         }),
         Some(Err(err)) => rsx!(ShowError {
             error: err.to_string(),

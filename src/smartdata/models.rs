@@ -133,7 +133,7 @@ impl Model {
         let mut yaml: BTreeMap<String, Model> = serde_yaml::from_str(&body).unwrap();
         let (_, mut model) = yaml.pop_first().expect("we have a object layer");
 
-        model.url = data_model_github(&repo_name, &name);
+        model.url = data_model_github(repo_name, name);
         model.name = name.clone();
 
         Ok(model)
