@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use anyhow::{bail, Context};
-
 use crate::{
     smartdata::models::{Model, ParsedModel},
     ModelData,
