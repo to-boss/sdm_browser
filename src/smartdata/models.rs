@@ -114,7 +114,9 @@ pub struct Model {
     pub tags: String,
     #[serde(rename = "x-version")]
     pub version: String,
+    #[serde(skip_deserializing)]
     pub url: String,
+    #[serde(skip_deserializing)]
     pub name: String,
 }
 
