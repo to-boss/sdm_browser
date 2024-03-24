@@ -23,7 +23,7 @@ pub fn FilteredList(list: ModelList, model_data: Signal<Option<ModelData>>) -> E
         Container {
             h1 {
                 class: "font-bold text-slate-950 text-lg",
-                "Model Selection"
+                "Smart Model Selection"
             },
             // FilterInput and List
             div {

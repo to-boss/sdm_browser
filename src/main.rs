@@ -82,7 +82,7 @@ fn App() -> Element {
     };
 
     rsx!(div {
-        class: "flex flex-row gap-1",
+        class: "flex flex-row",
         {rendered_model_list},
         {rendered_selected_model},
     })
