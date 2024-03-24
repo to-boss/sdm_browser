@@ -114,9 +114,7 @@ pub struct Model {
     pub tags: String,
     #[serde(rename = "x-version")]
     pub version: String,
-    #[serde(skip_deserializing)]
     pub url: String,
-    #[serde(skip_deserializing)]
     pub name: String,
 }
 
@@ -257,11 +255,8 @@ pub struct Property {
     pub typ: Option<String>,
     #[serde(rename = "x-ngsi")]
     pub xngsi: Option<XNgsi>,
-    #[serde(skip_deserializing)]
     pub checked: bool,
-    #[serde(skip_deserializing)]
     pub name: String,
-    #[serde(skip_deserializing)]
     pub required: bool,
 }
 
