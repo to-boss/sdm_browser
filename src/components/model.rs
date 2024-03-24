@@ -49,9 +49,6 @@ pub fn Model(model: ParsedModel) -> Element {
 fn Properties(selected_model: String) -> Element {
     let mut cache = consume_context::<Signal<ModelCache>>();
 
-    // We get a panick when getting a model which hasnt been cached yet and is getting fetched
-    // probably because of the async stuff...
-    // But the panick doesn't cause a crash
     let rendered_model = match cache.read().get(&selected_model) {
         Some(model) => rsx!(
             h1 {
